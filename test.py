@@ -24,8 +24,8 @@ def detect(net,img):
     olist = net(img)
 
     bboxlist = []
-    for i in range(len(olist)/2): olist[i*2] = F.softmax(olist[i*2])
-    for i in range(len(olist)/2):
+    for i in range(len(olist)//2): olist[i*2] = F.softmax(olist[i*2])
+    for i in range(len(olist)//2):
         ocls,oreg = olist[i*2].data.cpu(),olist[i*2+1].data.cpu()
         FB,FC,FH,FW = ocls.size() # feature map size
         stride = 2**(i+2)    # 4,8,16,32,64,128
