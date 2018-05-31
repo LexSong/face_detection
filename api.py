@@ -5,9 +5,6 @@ import numpy as np
 
 import net_s3fd
 from bbox import nms
-from bbox import decode as decode_old
-
-from numpy.testing import assert_array_equal
 
 torch.backends.cudnn.bencmark = True
 
@@ -57,14 +54,8 @@ class S3FD(object):
                 ayc = stride * (hindex + 0.5)
                 anchor_center = np.array([axc, ayc], dtype='float32')
 
-                loc_old = oreg[0:1, :, hindex, windex]
                 loc = oreg[0, :, hindex, windex]
-                priors = torch.Tensor(
-                    [[axc/1.0, ayc/1.0, stride*4/1.0, stride*4/1.0]])
-                variances = [0.1, 0.2]
-                box_old = decode_old(loc_old, priors, variances)
                 box = decode(loc, anchor_center, anchor_size, 0.1, 0.2)
-                assert_array_equal(box, box_old[0])
                 x1, y1, x2, y2 = box
                 score = scores[hindex, windex]
                 bboxlist.append([x1, y1, x2, y2, score])
