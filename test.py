@@ -18,7 +18,7 @@ class S3FD(object):
         self.net.cuda()
         self.net.eval()
 
-    def detect(self, img):
+    def _detect(self, img):
         img = img - np.array([104, 117, 123])
         img = img.transpose(2, 0, 1)
         img = img.reshape((1,)+img.shape)
@@ -51,6 +51,13 @@ class S3FD(object):
             bboxlist = np.zeros((1, 5))
         return bboxlist
 
+    def detect(self, img, threshold):
+        bboxlist = self._detect(img)
+        keep = nms(bboxlist, 0.3)
+        bboxlist = bboxlist[keep, :]
+        scores = bboxlist[:, 4]
+        return bboxlist[scores >= threshold]
+
 
 parser = argparse.ArgumentParser(description='PyTorch face detect')
 parser.add_argument('--model', default='', type=str)
@@ -70,14 +77,10 @@ while(True):
         img = cv2.imread(args.path)
 
     imgshow = np.copy(img)
-    bboxlist = s3fd.detect(img)
+    bboxlist = s3fd.detect(img, 0.5)
 
-    keep = nms(bboxlist, 0.3)
-    bboxlist = bboxlist[keep, :]
     for b in bboxlist:
         x1, y1, x2, y2, s = b
-        if s < 0.5:
-            continue
         cv2.rectangle(imgshow, (int(x1), int(y1)),
                       (int(x2), int(y2)), (0, 255, 0), 1)
     cv2.imshow('test', imgshow)
