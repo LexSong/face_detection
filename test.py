@@ -12,8 +12,11 @@ torch.backends.cudnn.bencmark = True
 
 
 class S3FD(object):
-    def __init__(self, net):
-        self.net = net
+    def __init__(self, model):
+        self.net = net_s3fd.s3fd()
+        self.net.load_state_dict(torch.load(model))
+        self.net.cuda()
+        self.net.eval()
 
     def detect(self, img):
         img = img - np.array([104, 117, 123])
@@ -50,23 +53,13 @@ class S3FD(object):
 
 
 parser = argparse.ArgumentParser(description='PyTorch face detect')
-parser.add_argument('--net', '-n', default='s3fd', type=str)
 parser.add_argument('--model', default='', type=str)
 parser.add_argument('--path', default='CAMERA', type=str)
 
 args = parser.parse_args()
-use_cuda = torch.cuda.is_available()
 
 
-net = getattr(net_s3fd, args.net)()
-if args.model != '':
-    net.load_state_dict(torch.load(args.model))
-else:
-    print('Please set --model parameter!')
-net.cuda()
-net.eval()
-
-s3fd = S3FD(net)
+s3fd = S3FD(args.model)
 
 if args.path == 'CAMERA':
     cap = cv2.VideoCapture(0)
