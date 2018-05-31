@@ -9,14 +9,14 @@ from bbox import nms
 torch.backends.cudnn.bencmark = True
 
 
-def decode(x, anchor_size, offset_var, size_var):
-    offset = anchor_size * offset_var * x[0:2]
-    size = anchor_size * torch.exp(x[2:4] * size_var)
+def decode(x, offset_var, size_var):
+    offset = offset_var * x[0:2]
+    size = np.exp(x[2:4] * size_var)
 
-    return (
+    return np.array((
         offset - size / 2,
-        offset - size / 2 + size
-        )
+        offset + size / 2
+        ))
 
 
 class S3FD(object):
@@ -43,7 +43,7 @@ class S3FD(object):
             scores = F.softmax(scores, dim=1)
             scores = scores[0, 1].data.cpu().numpy()
 
-            oreg = oreg.data.cpu()
+            oreg = oreg.data.cpu().numpy()
             stride = 2**(i+2)    # 4,8,16,32,64,128
             anchor_size = stride * 4
 
@@ -55,7 +55,7 @@ class S3FD(object):
                 anchor_center = np.array([axc, ayc], dtype='float32')
 
                 loc = oreg[0, :, hindex, windex]
-                offsets = decode(loc, anchor_size, 0.1, 0.2)
+                offsets = decode(loc, offset_var=0.1, size_var=0.2) * anchor_size
 
                 x1, y1 = anchor_center + offsets[0]
                 x2, y2 = anchor_center + offsets[1]
