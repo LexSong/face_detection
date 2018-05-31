@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 
-import cv2
 import numpy as np
 
 import net_s3fd
@@ -45,10 +44,11 @@ class S3FD(object):
                 box = decode(loc, priors, variances)
                 x1, y1, x2, y2 = box[0]*1.0
                 bboxlist.append([x1, y1, x2, y2, score])
-        bboxlist = np.array(bboxlist)
-        if 0 == len(bboxlist):
-            bboxlist = np.zeros((1, 5))
-        return bboxlist
+
+        if bboxlist:
+            return np.array(bboxlist)
+        else:
+            return np.zeros((0, 5))
 
     def detect(self, img, threshold):
         bboxlist = self._detect(img)
