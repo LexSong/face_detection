@@ -11,38 +11,42 @@ from bbox import decode, nms
 torch.backends.cudnn.bencmark = True
 
 
-def detect(net, img):
-    img = img - np.array([104, 117, 123])
-    img = img.transpose(2, 0, 1)
-    img = img.reshape((1,)+img.shape)
+class S3FD(object):
+    def __init__(self, net):
+        self.net = net
 
-    img = torch.from_numpy(img).float().cuda()
-    olist = net(img)
+    def detect(self, img):
+        img = img - np.array([104, 117, 123])
+        img = img.transpose(2, 0, 1)
+        img = img.reshape((1,)+img.shape)
 
-    bboxlist = []
-    for i in range(len(olist)//2):
-        olist[i*2] = F.softmax(olist[i*2], dim=1)
-    for i in range(len(olist)//2):
-        ocls, oreg = olist[i*2].data.cpu(), olist[i*2+1].data.cpu()
-        stride = 2**(i+2)    # 4,8,16,32,64,128
+        img = torch.from_numpy(img).float().cuda()
+        olist = self.net(img)
 
-        scores = ocls[0, 1].numpy()
-        valid_indices = np.argwhere(scores >= 0.05)
+        bboxlist = []
+        for i in range(len(olist)//2):
+            olist[i*2] = F.softmax(olist[i*2], dim=1)
+        for i in range(len(olist)//2):
+            ocls, oreg = olist[i*2].data.cpu(), olist[i*2+1].data.cpu()
+            stride = 2**(i+2)    # 4,8,16,32,64,128
 
-        for hindex, windex in valid_indices:
-            axc, ayc = stride/2+windex*stride, stride/2+hindex*stride
-            score = ocls[0, 1, hindex, windex]
-            loc = oreg[0, :, hindex, windex].contiguous().view(1, 4)
-            priors = torch.Tensor(
-                [[axc/1.0, ayc/1.0, stride*4/1.0, stride*4/1.0]])
-            variances = [0.1, 0.2]
-            box = decode(loc, priors, variances)
-            x1, y1, x2, y2 = box[0]*1.0
-            bboxlist.append([x1, y1, x2, y2, score])
-    bboxlist = np.array(bboxlist)
-    if 0 == len(bboxlist):
-        bboxlist = np.zeros((1, 5))
-    return bboxlist
+            scores = ocls[0, 1].numpy()
+            valid_indices = np.argwhere(scores >= 0.05)
+
+            for hindex, windex in valid_indices:
+                axc, ayc = stride/2+windex*stride, stride/2+hindex*stride
+                score = ocls[0, 1, hindex, windex]
+                loc = oreg[0, :, hindex, windex].contiguous().view(1, 4)
+                priors = torch.Tensor(
+                    [[axc/1.0, ayc/1.0, stride*4/1.0, stride*4/1.0]])
+                variances = [0.1, 0.2]
+                box = decode(loc, priors, variances)
+                x1, y1, x2, y2 = box[0]*1.0
+                bboxlist.append([x1, y1, x2, y2, score])
+        bboxlist = np.array(bboxlist)
+        if 0 == len(bboxlist):
+            bboxlist = np.zeros((1, 5))
+        return bboxlist
 
 
 parser = argparse.ArgumentParser(description='PyTorch face detect')
@@ -62,6 +66,7 @@ else:
 net.cuda()
 net.eval()
 
+s3fd = S3FD(net)
 
 if args.path == 'CAMERA':
     cap = cv2.VideoCapture(0)
@@ -72,7 +77,7 @@ while(True):
         img = cv2.imread(args.path)
 
     imgshow = np.copy(img)
-    bboxlist = detect(net, img)
+    bboxlist = s3fd.detect(img)
 
     keep = nms(bboxlist, 0.3)
     bboxlist = bboxlist[keep, :]
