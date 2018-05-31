@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 
 import cv2
-import argparse
 import numpy as np
 
 import net_s3fd
@@ -57,38 +56,3 @@ class S3FD(object):
         bboxlist = bboxlist[keep, :]
         scores = bboxlist[:, 4]
         return bboxlist[scores >= threshold]
-
-
-parser = argparse.ArgumentParser(description='PyTorch face detect')
-parser.add_argument('--model', default='', type=str)
-parser.add_argument('--path', default='CAMERA', type=str)
-
-args = parser.parse_args()
-
-
-s3fd = S3FD(args.model)
-
-if args.path == 'CAMERA':
-    cap = cv2.VideoCapture(0)
-while(True):
-    if args.path == 'CAMERA':
-        ret, img = cap.read()
-    else:
-        img = cv2.imread(args.path)
-
-    imgshow = np.copy(img)
-    bboxlist = s3fd.detect(img, 0.5)
-
-    for b in bboxlist:
-        x1, y1, x2, y2, s = b
-        cv2.rectangle(imgshow, (int(x1), int(y1)),
-                      (int(x2), int(y2)), (0, 255, 0), 1)
-    cv2.imshow('test', imgshow)
-
-    if args.path == 'CAMERA':
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    else:
-        cv2.imwrite(args.path[:-4]+'_output.png', imgshow)
-        if cv2.waitKey(0) or True:
-            break
