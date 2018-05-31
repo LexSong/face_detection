@@ -49,13 +49,14 @@ class S3FD(object):
 
             valid_indices = np.argwhere(scores >= 0.05)
 
+            all_offsets = decode(oreg[0], offset_var=0.1, size_var=0.2) * anchor_size
+
             for hindex, windex in valid_indices:
                 axc = stride * (windex + 0.5)
                 ayc = stride * (hindex + 0.5)
                 anchor_center = np.array([axc, ayc], dtype='float32')
 
-                loc = oreg[0, :, hindex, windex]
-                offsets = decode(loc, offset_var=0.1, size_var=0.2) * anchor_size
+                offsets = all_offsets[:, :, hindex, windex]
 
                 x1, y1 = anchor_center + offsets[0]
                 x2, y2 = anchor_center + offsets[1]
