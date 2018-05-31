@@ -30,12 +30,14 @@ def detect(net,img):
         FB,FC,FH,FW = ocls.size() # feature map size
         stride = 2**(i+2)    # 4,8,16,32,64,128
         anchor = stride*4
-        for Findex in range(FH*FW):
-            windex,hindex = Findex%FW,Findex//FW
+
+        scores = ocls[0, 1].numpy()
+        valid_indices = np.argwhere(scores >= 0.05)
+
+        for hindex, windex in valid_indices:
             axc,ayc = stride/2+windex*stride,stride/2+hindex*stride
             score = ocls[0,1,hindex,windex]
             loc = oreg[0,:,hindex,windex].contiguous().view(1,4)
-            if score<0.05: continue
             priors = torch.Tensor([[axc/1.0,ayc/1.0,stride*4/1.0,stride*4/1.0]])
             variances = [0.1,0.2]
             box = decode(loc,priors,variances)
