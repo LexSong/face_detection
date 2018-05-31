@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 import cv2
 import argparse
@@ -17,12 +16,12 @@ def detect(net, img):
     img = img.transpose(2, 0, 1)
     img = img.reshape((1,)+img.shape)
 
-    img = Variable(torch.from_numpy(img).float(), volatile=True).cuda()
+    img = torch.from_numpy(img).float().cuda()
     olist = net(img)
 
     bboxlist = []
     for i in range(len(olist)//2):
-        olist[i*2] = F.softmax(olist[i*2])
+        olist[i*2] = F.softmax(olist[i*2], dim=1)
     for i in range(len(olist)//2):
         ocls, oreg = olist[i*2].data.cpu(), olist[i*2+1].data.cpu()
         stride = 2**(i+2)    # 4,8,16,32,64,128
