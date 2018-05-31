@@ -19,30 +19,35 @@ class S3FD(object):
     def _detect(self, img):
         img = img - np.array([104, 117, 123])
         img = img.transpose(2, 0, 1)
-        img = img.reshape((1,)+img.shape)
-
+        img = np.expand_dims(img, axis=0)
         img = torch.from_numpy(img).float().cuda()
-        olist = self.net(img)
+
+        def iter_layers(layer_list):
+            x = iter(layer_list)
+            return zip(x, x)
+
+        layers = iter_layers(self.net(img))
 
         bboxlist = []
-        for i in range(len(olist)//2):
-            olist[i*2] = F.softmax(olist[i*2], dim=1)
-        for i in range(len(olist)//2):
-            ocls, oreg = olist[i*2].data.cpu(), olist[i*2+1].data.cpu()
+        for i, (scores, oreg) in enumerate(layers):
+            scores = F.softmax(scores, dim=1)
+            scores = scores[0, 1].data.cpu().numpy()
+
+            oreg = oreg.data.cpu()
             stride = 2**(i+2)    # 4,8,16,32,64,128
 
-            scores = ocls[0, 1].numpy()
             valid_indices = np.argwhere(scores >= 0.05)
 
             for hindex, windex in valid_indices:
-                axc, ayc = stride/2+windex*stride, stride/2+hindex*stride
-                score = ocls[0, 1, hindex, windex]
-                loc = oreg[0, :, hindex, windex].contiguous().view(1, 4)
+                axc = stride * (windex + 0.5)
+                ayc = stride * (hindex + 0.5)
+                loc = oreg[0:1, :, hindex, windex]
                 priors = torch.Tensor(
                     [[axc/1.0, ayc/1.0, stride*4/1.0, stride*4/1.0]])
                 variances = [0.1, 0.2]
                 box = decode(loc, priors, variances)
                 x1, y1, x2, y2 = box[0]*1.0
+                score = scores[hindex, windex]
                 bboxlist.append([x1, y1, x2, y2, score])
 
         if bboxlist:
