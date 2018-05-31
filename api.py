@@ -4,9 +4,22 @@ import torch.nn.functional as F
 import numpy as np
 
 import net_s3fd
-from bbox import decode, nms
+from bbox import nms
+from bbox import decode as decode_old
+
+from numpy.testing import assert_array_equal
 
 torch.backends.cudnn.bencmark = True
+
+
+def decode(x, anchor_center, anchor_size, offset_var, size_var):
+    offset = anchor_size * offset_var * x[0:2]
+    size = anchor_size * torch.exp(x[2:4] * size_var)
+
+    pt1 = anchor_center + offset - size / 2
+    pt2 = anchor_center + offset - size / 2 + size
+
+    return torch.cat((pt1, pt2))
 
 
 class S3FD(object):
@@ -35,18 +48,24 @@ class S3FD(object):
 
             oreg = oreg.data.cpu()
             stride = 2**(i+2)    # 4,8,16,32,64,128
+            anchor_size = stride * 4
 
             valid_indices = np.argwhere(scores >= 0.05)
 
             for hindex, windex in valid_indices:
                 axc = stride * (windex + 0.5)
                 ayc = stride * (hindex + 0.5)
-                loc = oreg[0:1, :, hindex, windex]
+                anchor_center = np.array([axc, ayc], dtype='float32')
+
+                loc_old = oreg[0:1, :, hindex, windex]
+                loc = oreg[0, :, hindex, windex]
                 priors = torch.Tensor(
                     [[axc/1.0, ayc/1.0, stride*4/1.0, stride*4/1.0]])
                 variances = [0.1, 0.2]
-                box = decode(loc, priors, variances)
-                x1, y1, x2, y2 = box[0]*1.0
+                box_old = decode_old(loc_old, priors, variances)
+                box = decode(loc, anchor_center, anchor_size, 0.1, 0.2)
+                assert_array_equal(box, box_old[0])
+                x1, y1, x2, y2 = box
                 score = scores[hindex, windex]
                 bboxlist.append([x1, y1, x2, y2, score])
 
