@@ -57,18 +57,15 @@ class S3FD(object):
             scores = F.softmax(scores[0], dim=0)[1]
             scores = scores.numpy()
 
-            valid_indices = np.argwhere(scores >= 0.05)
-
             offsets = offsets[0].numpy()
             offsets = anchor_size * decode(offsets, **self.decode_kwargs)
 
-            for hindex, windex in valid_indices:
-                axc = stride * (windex + 0.5)
-                ayc = stride * (hindex + 0.5)
-                anchor_center = np.array([axc, ayc], dtype='float32')
+            valid_indices = np.argwhere(scores >= 0.05)
 
-                points = anchor_center + offsets[:, :, hindex, windex]
-                score = scores[hindex, windex]
+            for y, x in valid_indices:
+                center = (np.array((x, y)) + 0.5) * stride
+                points = center + offsets[:, :, y, x]
+                score = scores[y, x]
 
                 bboxlist.append([*(points.ravel()), score])
 
