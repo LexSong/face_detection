@@ -26,24 +26,30 @@ class S3FD(object):
         self.net.cuda()
         self.net.eval()
 
+        for param in self.net.parameters():
+            param.requires_grad = False
+
     def _detect(self, img):
         img = img - np.array([104, 117, 123])
         img = img.transpose(2, 0, 1)
         img = np.expand_dims(img, axis=0)
         img = torch.from_numpy(img).float().cuda()
 
+        net_output = self.net(img)
+        net_output = [x.cpu() for x in net_output]
+
         def iter_layers(layer_list):
             x = iter(layer_list)
             return zip(x, x)
 
-        layers = iter_layers(self.net(img))
+        layers = iter_layers(net_output)
 
         bboxlist = []
         for i, (scores, oreg) in enumerate(layers):
             scores = F.softmax(scores, dim=1)
-            scores = scores[0, 1].data.cpu().numpy()
+            scores = scores[0, 1].numpy()
 
-            oreg = oreg.data.cpu().numpy()
+            oreg = oreg.numpy()
             stride = 2**(i+2)    # 4,8,16,32,64,128
             anchor_size = stride * 4
 
