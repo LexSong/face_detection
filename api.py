@@ -67,13 +67,10 @@ class S3FD(object):
                 ayc = stride * (hindex + 0.5)
                 anchor_center = np.array([axc, ayc], dtype='float32')
 
-                offsets_ = offsets[:, :, hindex, windex]
-
-                x1, y1 = anchor_center + offsets_[0]
-                x2, y2 = anchor_center + offsets_[1]
-
+                points = anchor_center + offsets[:, :, hindex, windex]
                 score = scores[hindex, windex]
-                bboxlist.append([x1, y1, x2, y2, score])
+
+                bboxlist.append([*(points.ravel()), score])
 
         if bboxlist:
             return np.array(bboxlist)
