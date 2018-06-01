@@ -29,6 +29,11 @@ class S3FD(object):
         for param in self.net.parameters():
             param.requires_grad = False
 
+        self.decode_kwargs = {
+            'offset_var': 0.1,
+            'size_var': 0.2,
+        }
+
     def _detect(self, img):
         img = img - np.array([104, 117, 123])
         img = img.transpose(2, 0, 1)
@@ -55,7 +60,7 @@ class S3FD(object):
 
             valid_indices = np.argwhere(scores >= 0.05)
 
-            all_offsets = decode(oreg[0], offset_var=0.1, size_var=0.2) * anchor_size
+            all_offsets = decode(oreg[0], **self.decode_kwargs) * anchor_size
 
             for hindex, windex in valid_indices:
                 axc = stride * (windex + 0.5)
