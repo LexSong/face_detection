@@ -10,13 +10,13 @@ torch.backends.cudnn.bencmark = True
 
 
 def decode(x, offset_var, size_var):
-    offset = offset_var * x[0:2]
+    offset = x[0:2] * offset_var
     size = np.exp(x[2:4] * size_var)
 
     return np.array((
         offset - size / 2,
-        offset + size / 2
-        ))
+        offset + size / 2,
+    ))
 
 
 class S3FD(object):
