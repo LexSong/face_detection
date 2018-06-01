@@ -41,7 +41,7 @@ class S3FD(object):
         img = torch.from_numpy(img).float().cuda()
 
         net_output = self.net(img)
-        net_output = [x.cpu() for x in net_output]
+        net_output = [x[0].cpu() for x in net_output]
 
         def iter_layers(layer_list):
             x = iter(layer_list)
@@ -54,10 +54,10 @@ class S3FD(object):
             stride = 2**(i+2)    # 4,8,16,32,64,128
             anchor_size = stride * 4
 
-            scores = F.softmax(scores[0], dim=0)[1]
+            scores = F.softmax(scores, dim=0)[1]
             scores = scores.numpy()
 
-            offsets = offsets[0].numpy()
+            offsets = offsets.numpy()
             offsets = anchor_size * decode(offsets, **self.decode_kwargs)
 
             valid_indices = np.argwhere(scores >= 0.05)
