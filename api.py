@@ -46,8 +46,8 @@ class S3FD(object):
 
         bboxlist = []
         for i, (scores, oreg) in enumerate(layers):
-            scores = F.softmax(scores, dim=1)
-            scores = scores[0, 1].numpy()
+            scores = F.softmax(scores[0], dim=0)[1]
+            scores = scores.numpy()
 
             oreg = oreg.numpy()
             stride = 2**(i+2)    # 4,8,16,32,64,128
