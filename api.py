@@ -50,27 +50,27 @@ class S3FD(object):
         layers = iter_layers(net_output)
 
         bboxlist = []
-        for i, (scores, oreg) in enumerate(layers):
-            scores = F.softmax(scores[0], dim=0)[1]
-            scores = scores.numpy()
-
-            oreg = oreg.numpy()
+        for i, (scores, offsets) in enumerate(layers):
             stride = 2**(i+2)    # 4,8,16,32,64,128
             anchor_size = stride * 4
 
+            scores = F.softmax(scores[0], dim=0)[1]
+            scores = scores.numpy()
+
             valid_indices = np.argwhere(scores >= 0.05)
 
-            all_offsets = decode(oreg[0], **self.decode_kwargs) * anchor_size
+            offsets = offsets[0].numpy()
+            offsets = anchor_size * decode(offsets, **self.decode_kwargs)
 
             for hindex, windex in valid_indices:
                 axc = stride * (windex + 0.5)
                 ayc = stride * (hindex + 0.5)
                 anchor_center = np.array([axc, ayc], dtype='float32')
 
-                offsets = all_offsets[:, :, hindex, windex]
+                offsets_ = offsets[:, :, hindex, windex]
 
-                x1, y1 = anchor_center + offsets[0]
-                x2, y2 = anchor_center + offsets[1]
+                x1, y1 = anchor_center + offsets_[0]
+                x2, y2 = anchor_center + offsets_[1]
 
                 score = scores[hindex, windex]
                 bboxlist.append([x1, y1, x2, y2, score])
