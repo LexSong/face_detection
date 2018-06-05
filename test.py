@@ -3,6 +3,7 @@ import sys
 from tqdm import tqdm
 
 from api import S3FD
+from bbox import nms
 
 
 class Video(object):
@@ -23,6 +24,9 @@ class Video(object):
 model = "models/s3fd_convert.pth"
 s3fd = S3FD(model)
 
+score_threshold = 0.5
+nms_threshold = 0.3
+
 video = Video(sys.argv[1])
 
 resize_shape = (640, int(640*video.frame_height/video.frame_width))
@@ -31,7 +35,8 @@ iter_frames = tqdm(video.iter_frames(), total=video.frame_count, ascii=True)
 
 for frame in iter_frames:
     frame = cv2.resize(frame, resize_shape, interpolation=cv2.INTER_AREA)
-    boxes = s3fd.detect(frame, 0.5)
+    boxes = s3fd.detect(frame, score_threshold)
+    boxes = boxes[nms(boxes, nms_threshold)]
     boxes = boxes[:, 0:4].astype(int)
 
     figure = frame.copy()

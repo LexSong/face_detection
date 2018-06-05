@@ -1,10 +1,8 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 
-import numpy as np
-
 import net_s3fd
-from bbox import nms
 
 torch.backends.cudnn.bencmark = True
 
@@ -34,7 +32,7 @@ class S3FD(object):
             'size_var': 0.2,
         }
 
-    def _detect(self, img):
+    def detect(self, img, threshold):
         img = img - np.array([104, 117, 123])
         img = img.transpose(2, 0, 1)
         img = np.expand_dims(img, axis=0)
@@ -60,7 +58,7 @@ class S3FD(object):
             offsets = offsets.numpy()
             offsets = anchor_size * decode(offsets, **self.decode_kwargs)
 
-            valid_indices = np.argwhere(scores >= 0.05)
+            valid_indices = np.argwhere(scores >= threshold)
 
             for y, x in valid_indices:
                 center = (np.array((x, y)) + 0.5) * stride
@@ -73,10 +71,3 @@ class S3FD(object):
             return np.array(bboxlist)
         else:
             return np.zeros((0, 5))
-
-    def detect(self, img, threshold):
-        bboxlist = self._detect(img)
-        keep = nms(bboxlist, 0.3)
-        bboxlist = bboxlist[keep, :]
-        scores = bboxlist[:, 4]
-        return bboxlist[scores >= threshold]
