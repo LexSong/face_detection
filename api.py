@@ -27,16 +27,17 @@ class S3FD(object):
         for param in self.net.parameters():
             param.requires_grad = False
 
+        self.img_offset = torch.Tensor((104, 117, 123)).cuda().float()
+
         self.decode_kwargs = {
             'offset_var': 0.1,
             'size_var': 0.2,
         }
 
     def detect(self, img, threshold):
-        img = img - np.array([104, 117, 123])
-        img = img.transpose(2, 0, 1)
-        img = np.expand_dims(img, axis=0)
-        img = torch.from_numpy(img).float().cuda()
+        img = torch.from_numpy(img).cuda().float()
+        img -= self.img_offset
+        img = torch.einsum('yxc->icyx', (img,))
 
         net_output = self.net(img)
         net_output = [x[0].cpu() for x in net_output]
