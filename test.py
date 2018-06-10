@@ -13,13 +13,15 @@ class Video(object):
         self.frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    def iter_frames(self):
+    def __iter__(self):
         while True:
             ret, frame = self.cap.read()
             if not ret:
                 break
             yield frame
 
+    def __len__(self):
+        return self.frame_count
 
 model = "models/s3fd_convert.pth"
 s3fd = S3FD(model)
@@ -31,9 +33,7 @@ video = Video(sys.argv[1])
 
 resize_shape = (640, int(640*video.frame_height/video.frame_width))
 
-iter_frames = tqdm(video.iter_frames(), total=video.frame_count, ascii=True)
-
-for frame in iter_frames:
+for frame in tqdm(video, ascii=True):
     frame = cv2.resize(frame, resize_shape, interpolation=cv2.INTER_AREA)
     boxes = s3fd.detect(frame, score_threshold)
     boxes = boxes[nms(boxes, nms_threshold)]
