@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-import net_s3fd
+from . import net_s3fd
 
 torch.backends.cudnn.bencmark = True
 
