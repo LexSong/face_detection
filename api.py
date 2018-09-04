@@ -4,8 +4,6 @@ import torch.nn.functional as F
 
 from . import net_s3fd
 
-torch.backends.cudnn.bencmark = True
-
 
 def decode(x, offset_var, size_var):
     offset = x[0:2] * offset_var
