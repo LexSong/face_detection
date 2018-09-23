@@ -35,7 +35,7 @@ class S3FD(object):
     def detect(self, img, threshold):
         img = torch.from_numpy(img).cuda().float()
         img -= self.img_offset
-        img = torch.einsum('yxc->icyx', (img,))
+        img = img.permute(2, 0, 1).unsqueeze(0)
 
         net_output = self.net(img)
         net_output = [x[0].cpu() for x in net_output]
