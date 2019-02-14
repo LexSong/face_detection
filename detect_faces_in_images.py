@@ -3,8 +3,8 @@ import cv2
 from pathlib import Path
 from tqdm import tqdm
 
-from face_project.face_detector import FaceDetector
-from face_project.utils import crop_and_resize_face
+from SFD_pytorch import FaceDetector
+from utils import crop_and_resize_face
 
 configs = {
     'detector_model': "models/S3FD/s3fd_convert.pth",

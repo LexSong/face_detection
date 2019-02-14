@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 from tqdm import tqdm
 
-from face_project.utils import VideoFile
-from face_project.utils import iter_by_step
-from face_project.utils import crop_and_resize_face
+from utils import VideoFile
+from utils import iter_by_step
+from utils import crop_and_resize_face
 
 configs = {
     'detector_model': "models/S3FD/s3fd_convert.pth",

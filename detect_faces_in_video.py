@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 from tqdm import tqdm
 
-from face_project.face_detector import FaceDetector
-from face_project.utils import VideoFile
-from face_project.utils import iter_by_step
+from SFD_pytorch import FaceDetector
+from utils import VideoFile
+from utils import iter_by_step
 
 configs = {
     'detector_model': "models/S3FD/s3fd_convert.pth",

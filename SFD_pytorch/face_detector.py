@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-from .SFD_pytorch.api import S3FD
-from .SFD_pytorch.bbox import nms
+from .api import S3FD
+from .bbox import nms
 
 detection_dtype = np.dtype([('box', float, 4), ('score', float)])
 
