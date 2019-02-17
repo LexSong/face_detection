@@ -37,11 +37,12 @@ def main(input_dir, output_file):
     detections = dict()
 
     for filename in tqdm(input_files, ascii=True):
-        filename = str(filename)
-        image = cv2.imread(filename, cv2.IMREAD_COLOR)
+        image = cv2.imread(str(filename), cv2.IMREAD_COLOR)
         boxes = detector.detect(image, resize_width=configs['detector_resize'])
         boxes = {x: boxes[x].tolist() for x in boxes.dtype.names}
-        detections[filename] = boxes
+
+        relative_fn = str(filename.relative_to(input_dir))
+        detections[relative_fn] = boxes
 
     with output_file.open('w') as f:
         json.dump(detections, f)
